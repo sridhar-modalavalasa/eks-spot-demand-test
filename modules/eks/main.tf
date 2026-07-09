@@ -36,7 +36,9 @@ module "eks" {
   addons = var.addons
 
   eks_managed_node_groups = {
-    app = {
+    (var.node_group_key) = {
+      name = var.node_group_name
+
       # Nodes stay in a single private ("app") subnet -> single zone.
       subnet_ids = var.node_subnet_ids
 
@@ -50,11 +52,15 @@ module "eks" {
       disk_size = var.node_disk_size
 
       labels = {
-        role = "app"
+        role      = "app"
+        capacity  = lower(var.node_capacity_type)
+        nodegroup = var.node_group_name
       }
 
       tags = {
-        Name = "${var.cluster_name}-app"
+        Name      = var.node_group_name
+        Component = "nodegroup"
+        Capacity  = var.node_capacity_type
       }
     }
   }

@@ -1,6 +1,31 @@
 # =============================================================================
 # VPC
 # =============================================================================
+output "resource_prefix" {
+  description = "Base name prefix used across all resources in this stack"
+  value       = local.resource_prefix
+}
+
+output "vpc_name" {
+  description = "VPC resource name"
+  value       = local.vpc_name
+}
+
+output "node_group_name" {
+  description = "EKS managed node group name"
+  value       = local.node_group_name
+}
+
+output "public_subnet_names" {
+  description = "Human-readable public subnet Name tags"
+  value       = local.public_subnet_names
+}
+
+output "private_subnet_names" {
+  description = "Human-readable private subnet Name tags"
+  value       = local.private_subnet_names
+}
+
 output "vpc_id" {
   description = "VPC ID"
   value       = module.vpc.vpc_id

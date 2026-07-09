@@ -36,6 +36,24 @@ variable "single_nat_gateway" {
   default     = true
 }
 
+variable "public_subnet_names" {
+  description = "Explicit Name tags for public subnets (one per AZ). When empty, names are auto-generated from the VPC name."
+  type        = list(string)
+  default     = []
+}
+
+variable "private_subnet_names" {
+  description = "Explicit Name tags for private subnets (one per AZ). When empty, names are auto-generated from the VPC name."
+  type        = list(string)
+  default     = []
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name used for kubernetes.io/cluster subnet discovery tags"
+  type        = string
+  default     = null
+}
+
 variable "public_subnet_tags" {
   description = "Additional tags for the public subnets (Kubernetes ELB discovery tags are merged in by the module)"
   type        = map(string)

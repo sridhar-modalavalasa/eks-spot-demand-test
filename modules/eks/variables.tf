@@ -48,6 +48,17 @@ variable "enable_cluster_creator_admin_permissions" {
   default     = true
 }
 
+variable "node_group_key" {
+  description = "Map key for the managed node group inside the EKS module"
+  type        = string
+  default     = "app"
+}
+
+variable "node_group_name" {
+  description = "AWS name for the managed node group (visible in the EKS console and EC2 tags)"
+  type        = string
+}
+
 variable "node_instance_types" {
   description = "Instance types for the managed node group"
   type        = list(string)

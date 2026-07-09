@@ -19,17 +19,42 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "OpenTofu"
       Project     = var.project_name
+      Stack       = local.resource_prefix
     }
   }
 }
 
 locals {
-  name = "${var.project_name}-${var.environment}"
+  # Naming convention:
+  #   {project}-{environment}-{component}-{detail}
+  # Examples:
+  #   eks-spot-demand-test-vpc
+  #   eks-spot-demand-test-public-us-east-1a
+  #   eks-spot-demand-test-private-app-us-east-1a
+  #   eks-spot-demand-test-eks
+  #   eks-spot-demand-test-ondemand-ng
+  resource_prefix = "${var.project_name}-${var.environment}"
+
+  vpc_name        = "${local.resource_prefix}-vpc"
+  cluster_name    = "${local.resource_prefix}-eks"
+  node_group_key  = lower(var.node_capacity_type) == "spot" ? "spot" : "ondemand"
+  node_group_name = "${local.resource_prefix}-${local.node_group_key}-ng"
+
+  public_subnet_names = [
+    for az in var.availability_zones : "${local.resource_prefix}-public-${az}"
+  ]
+
+  private_subnet_names = [
+    for az in var.availability_zones : "${local.resource_prefix}-private-app-${az}"
+  ]
 
   # Single-zone workload: worker nodes are placed in exactly one private subnet.
-  # The EKS control plane still needs subnets in >= 2 AZs (AWS hard requirement),
-  # which is why the VPC is built across var.availability_zones.
+  # The EKS control plane still needs subnets in >= 2 AZs (AWS hard requirement).
   node_subnet_ids = [element(module.vpc.private_subnets, var.node_az_index)]
+
+  common_tags = merge(var.common_tags, {
+    Stack = local.resource_prefix
+  })
 }
 
 # =============================================================================
@@ -38,17 +63,33 @@ locals {
 module "vpc" {
   source = "./modules/vpc"
 
-  name = "${local.name}-vpc"
+  name = local.vpc_name
   cidr = var.vpc_cidr
 
   azs             = var.availability_zones
   public_subnets  = var.public_subnet_cidrs
   private_subnets = var.private_subnet_cidrs
 
+  public_subnet_names  = local.public_subnet_names
+  private_subnet_names = local.private_subnet_names
+  cluster_name         = local.cluster_name
+
   enable_nat_gateway = var.enable_nat_gateway
   single_nat_gateway = var.single_nat_gateway
 
-  tags = var.common_tags
+  public_subnet_tags = {
+    Component = "network"
+    Tier      = "public"
+  }
+
+  private_subnet_tags = {
+    Component = "network"
+    Tier      = "private"
+  }
+
+  tags = merge(local.common_tags, {
+    Component = "vpc"
+  })
 }
 
 # =============================================================================
@@ -57,7 +98,7 @@ module "vpc" {
 module "eks" {
   source = "./modules/eks"
 
-  cluster_name       = "${local.name}-eks"
+  cluster_name       = local.cluster_name
   kubernetes_version = var.kubernetes_version
 
   vpc_id                   = module.vpc.vpc_id
@@ -67,11 +108,20 @@ module "eks" {
   endpoint_public_access       = var.cluster_endpoint_public_access
   endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
+  node_group_key      = local.node_group_key
+  node_group_name     = local.node_group_name
   node_instance_types = var.node_instance_types
   node_capacity_type  = var.node_capacity_type
   node_min_size       = var.node_min_size
   node_max_size       = var.node_max_size
   node_desired_size   = var.node_desired_size
 
-  tags = var.common_tags
+  tags = merge(local.common_tags, {
+    Component = "eks"
+  })
+
+  # Explicit ordering: finish VPC networking before creating the cluster.
+  depends_on = [
+    module.vpc,
+  ]
 }
