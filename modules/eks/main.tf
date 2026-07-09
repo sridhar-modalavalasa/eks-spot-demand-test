@@ -15,6 +15,7 @@ module "eks" {
 
   name               = var.cluster_name
   kubernetes_version = var.kubernetes_version
+  region             = var.aws_region
 
   # Networking: control plane ENIs span all provided (>= 2 AZ) subnets,
   # while worker nodes are pinned to node_subnet_ids (a single private subnet).
@@ -37,7 +38,8 @@ module "eks" {
 
   eks_managed_node_groups = {
     (var.node_group_key) = {
-      name = var.node_group_name
+      create = true
+      name   = var.node_group_name
 
       # Nodes stay in a single private ("app") subnet -> single zone.
       subnet_ids = var.node_subnet_ids
@@ -50,6 +52,10 @@ module "eks" {
       desired_size = var.node_desired_size
 
       disk_size = var.node_disk_size
+
+      # Fixed IAM role name — avoids "{name}-eks-node-group-" exceeding 38-char prefix limit.
+      iam_role_name            = var.node_iam_role_name
+      iam_role_use_name_prefix = false
 
       labels = {
         role      = "app"

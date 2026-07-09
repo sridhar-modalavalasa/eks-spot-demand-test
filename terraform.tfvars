@@ -5,6 +5,9 @@ aws_region   = "us-east-1"
 project_name = "eks-spot-demand"
 environment  = "test"
 
+# Single prefix for ALL resource names: eks-sdtest-{resource}
+name_prefix = "eks-sdtest"
+
 # =============================================================================
 # VPC
 # =============================================================================
@@ -35,7 +38,7 @@ cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 # Node group
 # =============================================================================
 node_instance_types = ["t3.large"]
-node_capacity_type  = "ON_DEMAND" # use SPOT to get eks-spot-demand-test-spot-ng
+node_capacity_type  = "ON_DEMAND" # use SPOT for eks-sdtest-spot-ng
 node_min_size       = 1
 node_max_size       = 3
 node_desired_size   = 2

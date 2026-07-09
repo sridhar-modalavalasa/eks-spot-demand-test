@@ -19,33 +19,32 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "OpenTofu"
       Project     = var.project_name
-      Stack       = local.resource_prefix
+      Stack       = var.name_prefix
     }
   }
 }
 
 locals {
-  # Naming convention:
-  #   {project}-{environment}-{component}-{detail}
-  # Examples:
-  #   eks-spot-demand-test-vpc
-  #   eks-spot-demand-test-public-us-east-1a
-  #   eks-spot-demand-test-private-app-us-east-1a
-  #   eks-spot-demand-test-eks
-  #   eks-spot-demand-test-ondemand-ng
-  resource_prefix = "${var.project_name}-${var.environment}"
+  # Single naming pattern for every resource: eks-sdtest-{resource}
+  #   eks-sdtest-vpc
+  #   eks-sdtest-eks
+  #   eks-sdtest-public-us-east-1a
+  #   eks-sdtest-private-app-us-east-1a
+  #   eks-sdtest-ondemand-ng  |  eks-sdtest-spot-ng
 
-  vpc_name        = "${local.resource_prefix}-vpc"
-  cluster_name    = "${local.resource_prefix}-eks"
-  node_group_key  = lower(var.node_capacity_type) == "spot" ? "spot" : "ondemand"
-  node_group_name = "${local.resource_prefix}-${local.node_group_key}-ng"
+  vpc_name     = "${var.name_prefix}-vpc"
+  cluster_name = "${var.name_prefix}-eks"
+
+  node_group_key     = lower(var.node_capacity_type) == "spot" ? "spot" : "ondemand"
+  node_group_name    = "${var.name_prefix}-${local.node_group_key}-ng"
+  node_iam_role_name = "${var.name_prefix}-${local.node_group_key}-ng-role"
 
   public_subnet_names = [
-    for az in var.availability_zones : "${local.resource_prefix}-public-${az}"
+    for az in var.availability_zones : "${var.name_prefix}-public-${az}"
   ]
 
   private_subnet_names = [
-    for az in var.availability_zones : "${local.resource_prefix}-private-app-${az}"
+    for az in var.availability_zones : "${var.name_prefix}-private-app-${az}"
   ]
 
   # Single-zone workload: worker nodes are placed in exactly one private subnet.
@@ -53,7 +52,7 @@ locals {
   node_subnet_ids = [element(module.vpc.private_subnets, var.node_az_index)]
 
   common_tags = merge(var.common_tags, {
-    Stack = local.resource_prefix
+    Stack = var.name_prefix
   })
 }
 
@@ -98,6 +97,7 @@ module "vpc" {
 module "eks" {
   source = "./modules/eks"
 
+  aws_region         = var.aws_region
   cluster_name       = local.cluster_name
   kubernetes_version = var.kubernetes_version
 
@@ -110,6 +110,7 @@ module "eks" {
 
   node_group_key      = local.node_group_key
   node_group_name     = local.node_group_name
+  node_iam_role_name  = local.node_iam_role_name
   node_instance_types = var.node_instance_types
   node_capacity_type  = var.node_capacity_type
   node_min_size       = var.node_min_size

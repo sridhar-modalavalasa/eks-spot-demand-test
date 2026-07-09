@@ -1,9 +1,14 @@
 # =============================================================================
 # VPC
 # =============================================================================
-output "resource_prefix" {
-  description = "Base name prefix used across all resources in this stack"
-  value       = local.resource_prefix
+output "name_prefix" {
+  description = "Prefix used for all AWS resource names in this stack"
+  value       = var.name_prefix
+}
+
+output "node_iam_role_name" {
+  description = "IAM role name for the managed node group"
+  value       = local.node_iam_role_name
 }
 
 output "vpc_name" {

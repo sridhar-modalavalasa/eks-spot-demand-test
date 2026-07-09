@@ -19,6 +19,12 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "name_prefix" {
+  description = "Prefix for all AWS resource names. Pattern: {name_prefix}-{resource}, e.g. eks-sdtest-vpc, eks-sdtest-eks, eks-sdtest-public-us-east-1a"
+  type        = string
+  default     = "eks-sdtest"
+}
+
 # =============================================================================
 # VPC
 # =============================================================================

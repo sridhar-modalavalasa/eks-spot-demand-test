@@ -1,3 +1,8 @@
+variable "aws_region" {
+  description = "AWS region for the EKS cluster"
+  type        = string
+}
+
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
@@ -56,6 +61,11 @@ variable "node_group_key" {
 
 variable "node_group_name" {
   description = "AWS name for the managed node group (visible in the EKS console and EC2 tags)"
+  type        = string
+}
+
+variable "node_iam_role_name" {
+  description = "Fixed IAM role name for the node group (avoids AWS 38-char name_prefix limit)"
   type        = string
 }
 
