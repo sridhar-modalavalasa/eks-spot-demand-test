@@ -121,8 +121,7 @@ module "eks" {
     Component = "eks"
   })
 
-  # Explicit ordering: finish VPC networking before creating the cluster.
-  depends_on = [
-    module.vpc,
-  ]
+  # VPC is already ordered implicitly via module.vpc.vpc_id and subnet IDs.
+  # Do NOT add depends_on = [module.vpc] here — EKS module v21 breaks node group
+  # planning when depends_on defers partition/account_id data sources to apply.
 }
